@@ -12,11 +12,34 @@ drive.mount("/content/drive")
 
 import pandas as pd
 
-df = pd.read_csv("/content/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+df = pd.read_csv("/content/drive/MyDrive/customer churn/WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
 df.head()
 
 df.dtypes
+
+"""**Exploratory Data Analysis**"""
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.countplot(x="Churn",data=df)
+
+"""Churn is near 5000 not churn near 2000 so the data is inbalanced"""
+
+sns.countplot(x='Contract',hue="Churn",data=df)
+
+for i in df.Contract.unique():
+  print("Contract:",i,"percentage of non churn per churn",df[(df.Contract=="Month-to-month") & (df.Churn=="No")].shape[0]/df[(df.Contract==i) & (df.Churn=="Yes")].shape[0])
+
+"""month to month has the biggest number of not churn and churn near 1700 churn which is huge compared to the other two types for one year its less than 200 and two year its less than 100 even tho the number of not churn is big also on month to month but the ratio of not churn and churn is very small on month to month we calculated using  
+
+so month to month clienst are most likely to churn beacuase the contarct is too short but for 1 year or two year the probaility of churn is very small so the company need to convince more people to go for one or two year contract by offering convincing exciting offers like reducing money or higehr qulity or extra offers
+"""
+
+sns.histplot(data=df,x="tenure",hue='Churn', multiple='stack')
+
+"""the count of tenure overall is going down till 70 months and it s raises very fast which means that we have a lot of old loyal client second is that we also have a lot of new clients as 1200 client are less than 5 months of using our company third the number of churn goes down dramatically after the 5 months from 700 churn client to 200 client for 10 months tenure so as suggestion the company needs t target new clients less tan 5 months tenure and offer exculsive offers trying to keep them to the company for more time before they churn"""
 
 df=df.drop("customerID",axis=1)
 
@@ -43,8 +66,19 @@ df.TotalCharges=pd.to_numeric(df.TotalCharges,errors="coerce")
 
 lasto=df.dtypes[df.dtypes=="object"]
 
+lasto
+
+for i in lasto.index:
+  print(df[i].unique())
+
+df.InternetService[df['InternetService']=="No"].count()
+
 for i in lasto.index:
   df=pd.concat([df,pd.get_dummies(df[i])],axis=1)
+
+df
+
+df=df.rename(columns={"No":"No internet service"})
 
 df
 
@@ -58,6 +92,12 @@ df.isnull().sum()[df.isnull().sum()!=0]
 df.TotalCharges[df.TotalCharges.isnull()]=df.TotalCharges.mean()
 
 df.isnull().sum()[df.isnull().sum()!=0]
+
+corr_matrix=df.corr(numeric_only=True)
+
+sns.heatmap(corr_matrix)
+
+"""there is a strong positive correlation betweenn tenure and total chargeswhcih is normal because the more tenure the more the the charges uteh client spend and monthly charges and fiber optic which means that fiber optic is exepnsive  also there is a strong negative corrlation between month to month and tenure because the more tenure the more the client goes for 1 or 2 year contract also we have monthly charges and no internet services whcih means the having internet service is exepnsive *"""
 
 df.shape
 
@@ -146,3 +186,22 @@ joblib.dump(newmodel,"churn_model.pkl")
 
 loaded_model=joblib.load("churn_model.pkl")
 print(classification_report(y_test,loaded_model.predict(X_test)))
+
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.ensemble import GradientBoostingClassifier
+
+DT=DecisionTreeClassifier()
+
+GB=GradientBoostingClassifier()
+
+DT.fit(X_train,y_train)
+
+GB.fit(X_train,y_train)
+
+DTp=DT.predict(X_test)
+GBP=GB.predict(X_test)
+
+print(classification_report(y_test,DTp))
+
+print(classification_report(y_test,GBP))
